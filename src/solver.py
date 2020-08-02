@@ -44,7 +44,7 @@ class Solver:
         solve_moves += self.second_layer()
         solve_moves += self.last_layer()
         print("FINAL STATE:\n\n" + str(self.cube))
-        return solve_moves
+        return self.remove_redundancies(solve_moves)
 
     def first_layer(self):
         solve_moves = self.white_cross()
@@ -371,6 +371,7 @@ class Solver:
         solve_moves = []
         num_last_faces_solved = self.get_num_last_faces_solved()
         while num_last_faces_solved != 4:
+            print(num_last_faces_solved)
             solve_moves += self.solve_middle_alg()
             num_last_faces_solved = self.get_num_last_faces_solved()
         return solve_moves
@@ -383,7 +384,7 @@ class Solver:
             solve_moves.append('U2')
         elif self.cube.state[2][0][0]==self.cube.state[2][0][1]:
             solve_moves.append("U'")
-        solve_moves += ['L2', "U'", "F'", 'B', 'L2', 'F', "B'", 'U', 'L2']
+        solve_moves += ['L2', "U'", "F'", 'B', 'L2', 'F', "B'", "U'", 'L2']
         
         for move in solve_moves:
             self.move_fns[move]()
@@ -401,4 +402,27 @@ class Solver:
         else:
             return []
         self.move_fns[solve_moves[0]]()
+        return solve_moves
+
+    def add_similar_moves(self, move1, move2):
+        mapping = {'':0, move1[0]:1, move1[0]+'2':2, move1[0]+"'":3}
+        new_move = (mapping[move1]+mapping[move2])%4
+        for i in mapping:
+            if mapping[i]==new_move:
+                return i
+
+    def remove_redundancies(self, solve_moves):
+        i = 1
+        while i < len(solve_moves):
+            if solve_moves[i][0]==solve_moves[i-1][0]:
+                new_move = self.add_similar_moves(solve_moves[i],solve_moves[i-1])
+                if new_move=='':
+                    solve_moves.pop(i-1)
+                    solve_moves.pop(i-1)
+                    i -= 1
+                    continue
+                solve_moves.pop(i)
+                solve_moves[i-1] = new_move
+            else:
+                i += 1
         return solve_moves
